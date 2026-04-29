@@ -37,7 +37,7 @@
 .tk-toggle{position:relative;display:inline-block;width:32px;height:18px;flex-shrink:0}
 .tk-toggle input{opacity:0;width:0;height:0}
 .tk-toggle .slider{position:absolute;inset:0;background:var(--tk-surface);border:1px solid var(--tk-border);border-radius:999px;cursor:pointer;transition:.15s}
-.tk-toggle .slider::before{content:"";position:absolute;left:2px;top:1px;width:12px;height:12px;background:var(--tk-text-muted);border-radius:50%;transition:.15s}
+.tk-toggle .slider::before{content:"";position:absolute;left:2px;top:3px;width:12px;height:12px;background:var(--tk-text-muted);border-radius:50%;transition:.15s}
 .tk-toggle input:checked+.slider{background:var(--tk-accent);border-color:var(--tk-accent)}
 .tk-toggle input:checked+.slider::before{transform:translateX(14px);background:#fff}
 
@@ -653,22 +653,23 @@ function fireBeat(idx) {
   if (state.tickEnabled && !dom.video.paused) playTick();
 }
 
-function playTick() {
-  if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const ac = state.audioCtx;
-  const now = ac.currentTime;
-  const osc = ac.createOscillator();
-  const gain = ac.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(1800, now);
-  osc.frequency.exponentialRampToValueAtTime(800, now + 0.04);
-  gain.gain.setValueAtTime(0.0001, now);
-  gain.gain.exponentialRampToValueAtTime(0.15, now + 0.005);
-  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
-  osc.connect(gain).connect(ac.destination);
-  osc.start(now);
-  osc.stop(now + 0.08);
-}
+  function playTick() {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const now = ac.currentTime;
+
+    // Body — sine 155→65 Hz drop in 25ms, very fast attack
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(155, now);
+    osc.frequency.exponentialRampToValueAtTime(65, now + 0.025);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.003);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.038);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(now);
+    osc.stop(now + 0.048);
+  }
 
 // ── Smooth time interpolation ───────────────────────────
 // Fixes jitter: video.currentTime only ticks ~30Hz; we interp with perf.now()
